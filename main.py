@@ -4,7 +4,7 @@ from tkinter import ttk, simpledialog
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Никита мой ")
+        self.title("Никита мой маленький")
         self.geometry("1000x500")
         self.configure(bg="#f8f9fa")
 
