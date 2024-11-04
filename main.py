@@ -113,7 +113,7 @@ class App(tk.Tk):
     def save_combobox_value(self, item_id, col_index, combobox):
         # Сохранение значения из Combobox в ячейку
         self.tree.set(item_id, f"Col {col_index}", combobox.get())
-        combobox.destroy()  # Удаляем Combobox
+        combobox.destroy()  # абоба директор
 
 
 if __name__ == "__main__":
