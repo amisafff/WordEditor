@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import ttk, simpledialog
 
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Никита мой маленький")
+        self.title("Таблица с вводом данных и выпадающими списками")
         self.geometry("1000x500")
         self.configure(bg="#f8f9fa")
 
@@ -16,9 +17,11 @@ class App(tk.Tk):
         title_label.pack(pady=10)
 
         # Словарь для хранения значений чекбоксов для выпадающих списков
-        self.check_options = {4: ["Опция 1", "Опция 2", "Опция 3"],
-                              5: ["Опция A", "Опция B", "Опция C"],
-                              6: ["Опция X", "Опция Y", "Опция Z"]}
+        self.check_options = {
+            4: ["Опция 1", "Опция 2", "Опция 3"],
+            5: ["Опция A", "Опция B", "Опция C"],
+            6: ["Опция X", "Опция Y", "Опция Z"]
+        }
 
         # Создание таблицы с 10 столбцами
         self.tree = ttk.Treeview(self, columns=[f"Col {i}" for i in range(1, 11)], show='headings', height=15)
@@ -31,54 +34,24 @@ class App(tk.Tk):
         button_frame = tk.Frame(self, bg="#f8f9fa")
         button_frame.pack(pady=10)
 
-        add_button = tk.Button(button_frame, text="Добавить строку", command=self.add_row, bg="#28a745", fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
+        add_button = tk.Button(button_frame, text="Добавить строку", command=self.add_row, bg="#28a745", fg="white",
+                               font=("Arial", 9, "bold"), padx=3, pady=3)
         add_button.grid(row=0, column=0, padx=5)
 
-        delete_button = tk.Button(button_frame, text="Удалить строку", command=self.delete_row, bg="#dc3545", fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
+        delete_button = tk.Button(button_frame, text="Удалить строку", command=self.delete_row, bg="#dc3545",
+                                  fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
         delete_button.grid(row=0, column=1, padx=5)
 
-        add_option_button = tk.Button(button_frame, text="Добавить опцию", command=self.add_option, bg="#007bff", fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
+        add_option_button = tk.Button(button_frame, text="Добавить опцию", command=self.add_option, bg="#007bff",
+                                      fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
         add_option_button.grid(row=0, column=2, padx=5)
+
+        # Событие для редактирования ячеек
+        self.tree.bind("<Double-1>", self.on_double_click)
 
     def add_row(self):
         # Создаем новую строку в таблице
-        row_id = self.tree.insert("", tk.END, values=["" for _ in range(10)])
-
-        # Массив для хранения Entry виджетов
-        entries = []
-
-        # Добавляем поля ввода для каждой ячейки новой строки
-        for col in range(1, 11):
-            if col in [4, 5, 6]:  # Выпадающий список с чекбоксами для 4, 5 и 6 столбцов
-                button = tk.Menubutton(self, text="Выберите", relief=tk.RAISED, bg="#e9ecef", font=("Arial", 9))
-                menu = tk.Menu(button, tearoff=0)
-                button["menu"] = menu
-
-                # Добавляем опции чекбоксов
-                for option in self.check_options[col]:
-                    var = tk.BooleanVar()
-                    menu.add_checkbutton(label=option, variable=var)
-
-                # Расположение выпадающего списка
-                button_window = self.tree.bbox(row_id, f"Col {col}")
-                button.place(x=button_window[0] + 20, y=button_window[1] + 30)
-            else:  # Для остальных столбцов добавляем Entry
-                entry = tk.Entry(self, font=("Arial", 10))
-                entry_window = self.tree.bbox(row_id, f"Col {col}")
-                entry.place(x=entry_window[0] + 20, y=entry_window[1] + 30)
-                entries.append((col, entry))
-
-        # Кнопка для сохранения введенной строки
-        save_button = tk.Button(self, text="Сохранить", command=lambda: self.save_row(row_id, entries), bg="#28a745", fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
-        save_button.place(x=20, y=450)
-
-    def save_row(self, row_id, entries):
-        # Сохранение данных из Entry виджетов в таблицу
-        data = [""] * 10
-        for col, entry in entries:
-            data[col - 1] = entry.get()  # Сохраняем значение в нужной ячейке строки
-            entry.destroy()  # Убираем Entry после ввода данных
-        self.tree.item(row_id, values=data)
+        self.tree.insert("", tk.END, values=["" for _ in range(10)])
 
     def delete_row(self):
         # Удаление выбранной строки
@@ -90,9 +63,58 @@ class App(tk.Tk):
         # Диалог для ввода новой опции
         column = simpledialog.askinteger("Добавить опцию", "Выберите столбец (4, 5 или 6)", minvalue=4, maxvalue=6)
         if column and column in [4, 5, 6]:
-            option = simpledialog.askstring("Новая опция", "Введите название опциии")
+            option = simpledialog.askstring("Новая опция", "Введите название опции")
             if option:
                 self.check_options[column].append(option)
+
+    def on_double_click(self, event):
+        # Получаем строку и столбец, по которым был двойной щелчок
+        item_id = self.tree.focus()
+        column = self.tree.identify_column(event.x)
+        col_index = int(column.replace("#", ""))
+
+        # Если столбец имеет ограниченный набор опций, используем Combobox
+        if col_index in self.check_options:
+            self.create_combobox(item_id, col_index)
+        else:
+            self.create_entry(item_id, col_index)
+
+    def create_entry(self, item_id, col_index):
+        # Создаем Entry для ввода текста
+        x, y, width, height = self.tree.bbox(item_id, f"Col {col_index}")
+        entry = tk.Entry(self.tree, font=("Arial", 10))
+        entry.place(x=x, y=y, width=width, height=height)
+
+        # Устанавливаем текущее значение
+        entry.insert(0, self.tree.item(item_id, "values")[col_index - 1])
+
+        # Фокус и сохранение значения по завершению
+        entry.focus()
+        entry.bind("<Return>", lambda e: self.save_entry_value(item_id, col_index, entry))
+
+    def save_entry_value(self, item_id, col_index, entry):
+        # Сохранение значения в ячейку
+        self.tree.set(item_id, f"Col {col_index}", entry.get())
+        entry.destroy()  # Удаляем Entry
+
+    def create_combobox(self, item_id, col_index):
+        # Создаем Combobox для выбора из ограниченного набора опций
+        x, y, width, height = self.tree.bbox(item_id, f"Col {col_index}")
+        combobox = ttk.Combobox(self.tree, values=self.check_options[col_index], font=("Arial", 10))
+        combobox.place(x=x, y=y, width=width, height=height)
+
+        # Устанавливаем текущее значение
+        combobox.set(self.tree.item(item_id, "values")[col_index - 1])
+
+        # Сохранение выбранного значения по завершению
+        combobox.bind("<<ComboboxSelected>>", lambda e: self.save_combobox_value(item_id, col_index, combobox))
+        combobox.focus()
+
+    def save_combobox_value(self, item_id, col_index, combobox):
+        # Сохранение значения из Combobox в ячейку
+        self.tree.set(item_id, f"Col {col_index}", combobox.get())
+        combobox.destroy()  # Удаляем Combobox
+
 
 if __name__ == "__main__":
     app = App()
