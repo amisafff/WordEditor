@@ -4,7 +4,7 @@ from tkinter import ttk, simpledialog
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Таблица с вводом данных и выпадающими списками")
+        self.title("Никита мой герой")
         self.geometry("1000x500")
         self.configure(bg="#f8f9fa")
 
