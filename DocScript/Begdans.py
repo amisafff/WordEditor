@@ -1,18 +1,16 @@
 import os
-import tkinter as tk
-from tkinter import filedialog
 from docx import Document
-import Table
 
 
 def fill_word_template(dat_all, template_path, output_file_path):
+    print(dat_all)
     for i in range(len(dat_all)):
+
         doc = Document(template_path)
+
         substrings = dat_all[i][6].split(',')
-        print(len(dat_all))
         if len(substrings) <= 6:
             ind = len(substrings)
-
             for j in range(ind, 6):
                 substrings.append("")
 
@@ -45,52 +43,7 @@ def fill_word_template(dat_all, template_path, output_file_path):
                         if f"{{{{{key}}}}}" in cell.text:
                             cell.text = cell.text.replace(f"{{{{{key}}}}}", str(value))
 
-        folder_path = output_file_path
-        file_name = f"{i+1} template.docx"
-        template_path = os.path.join(folder_path, file_name)
+        file_name = f"{i + 1}_template.docx"
+        save_path = os.path.join(output_file_path, file_name)
 
-        doc.save(template_path)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        doc.save(save_path)
