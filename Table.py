@@ -30,9 +30,12 @@ class App(tk.Tk):
                               7: ["Опция A", "Опция B", "Опция C"],
                               9: ["Опция X", "Опция Y", "Опция Z"]}
 
+        # Автоматическая загрузка опций при инициализации
+        self.load_options_for_columns([4, 7, 9])
+
         columns = [
             "Номер протокола", "День Месяц Год", "ФИО", "Специальность", "Тема ДП",
-            "Председатель ГЭК", "Члены ГЭК", "Консультант","Форма обучения","Руководитель",
+            "Председатель ГЭК", "Члены ГЭК", "Консультант", "Форма обучения", "Руководитель",
             "Оценка", "Виза лица, составившего протокол ", "Степень", "Диплом с отличием"
         ]
 
@@ -71,6 +74,28 @@ class App(tk.Tk):
                                 bg="#87CEFA",
                                 fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
         save_button.grid(row=0, column=4, padx=5)
+
+    def load_options_for_columns(self, columns):
+        """
+        Загрузка опций для столбцов, если они существуют в check_options.
+        """
+        for column_index in columns:
+            if column_index in self.check_options:
+                self.load_options_from_file(column_index)
+
+    def load_options_from_file(self, column_index):
+        """
+        Загружает опции из файла для указанного столбца.
+        """
+        file_path = f"options_{column_index}.txt"  # Для каждого столбца свой файл
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                new_options = [line.strip() for line in file.readlines()]
+                self.check_options[column_index] = list(set(self.check_options[column_index] + new_options))
+        except FileNotFoundError:
+            pass  # Если файл не найден, просто не загружаем опции
+        except Exception as e:
+            tk.messagebox.showerror("Ошибка", f"Не удалось загрузить опции для столбца {column_index}: {e}")
 
 
 

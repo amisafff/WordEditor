@@ -151,7 +151,6 @@ def delete_row(self):
 
 def manage_options(self):
     def update_options_list():
-
         option_list.delete(0, tk.END)
         for option in self.check_options[column_index]:
             option_list.insert(tk.END, option)
@@ -162,6 +161,7 @@ def manage_options(self):
             self.check_options[column_index].append(new_option)
             update_options_list()
             new_option_entry.delete(0, tk.END)
+            save_options_to_file()  # Сохраняем опции после добавления
 
     def delete_selected_option():
         selected_items = option_list.curselection()
@@ -169,19 +169,29 @@ def manage_options(self):
             for index in selected_items[::-1]:
                 del self.check_options[column_index][index]
             update_options_list()
+            save_options_to_file()  # Сохраняем опции после удаления
+
+    def save_options_to_file():
+        file_path = f"options_{column_index}.txt"  # Для каждого столбца свой файл
+        try:
+            with open(file_path, "w", encoding="utf-8") as file:
+                for option in self.check_options[column_index]:
+                    file.write(option + "\n")
+        except Exception as e:
+            tk.messagebox.showerror("Ошибка", f"Не удалось сохранить опции: {e}")
+
+
 
     column_index = simpledialog.askinteger(
         "Управление опциями", "Для какого столбца (4, 7 или 9) вы хотите управлять опциями?"
     )
     if column_index in self.check_options:
-
         dialog = tk.Toplevel(self)
         dialog.title(f"Управление опциями для столбца {column_index}")
         dialog.geometry("400x400")
         dialog.configure(bg="#f8f9fa")
 
         tk.Label(dialog, text=f"Опции для столбца {column_index}:", bg="#f8f9fa", font=("Arial", 10, "bold")).pack(pady=10)
-
 
         option_list_frame = tk.Frame(dialog, bg="#f8f9fa")
         option_list_frame.pack(pady=5, padx=10, fill=tk.BOTH, expand=True)
@@ -194,12 +204,10 @@ def manage_options(self):
         option_list.config(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-
         new_option_label = tk.Label(dialog, text="Добавить новую опцию:", bg="#f8f9fa")
         new_option_label.pack(pady=(10, 0))
         new_option_entry = tk.Entry(dialog, width=30)
         new_option_entry.pack(pady=(0, 10))
-
 
         button_frame = tk.Frame(dialog, bg="#f8f9fa")
         button_frame.pack(pady=10)
@@ -213,6 +221,8 @@ def manage_options(self):
             button_frame, text="Удалить выбранные", command=delete_selected_option, bg="#dc3545", fg="white", font=("Arial", 9, "bold")
         )
         delete_button.grid(row=0, column=1, padx=5)
+
+
 
         close_button = tk.Button(
             dialog, text="Закрыть", command=dialog.destroy, bg="#007bff", fg="white", font=("Arial", 9, "bold")
