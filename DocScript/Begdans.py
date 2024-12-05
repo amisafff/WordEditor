@@ -14,9 +14,12 @@ def fill_word_template(dat_all, template_path, output_file_path):
             for j in range(ind, 6):
                 substrings.append("")
 
+        substringsDate = dat_all[i][1].split('-')
+
         data = {
             "Номер_протокола": dat_all[i][0],
-            "Месяц_год_время": dat_all[i][1],
+            "День": substringsDate[2],
+            "Год": substringsDate[0],
             "ФИО": dat_all[i][2],
             "Специальность": dat_all[i][3],
             "Тема_ДП": dat_all[i][4],
@@ -29,6 +32,7 @@ def fill_word_template(dat_all, template_path, output_file_path):
             "Члены_ГЭК6": substrings[5],
             "Руководитель": dat_all[i][9],
             "Консультант": dat_all[i][7],
+            "Виза лица": dat_all[i][11],
         }
 
         for paragraph in doc.paragraphs:

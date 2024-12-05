@@ -12,6 +12,9 @@ class App(tk.Tk):
         self.geometry("1920x900")
         self.configure(bg="#f8f9fa")
 
+        # Развернуть окно на весь экран
+        self.state("zoomed")
+
         # Структура для хранения данных
         self.data = []
 
@@ -28,7 +31,7 @@ class App(tk.Tk):
                               9: ["Опция X", "Опция Y", "Опция Z"]}
 
         columns = [
-            "Номер протокола", "Месяц год время", "ФИО", "Специальность", "Тема ДП",
+            "Номер протокола", "День Месяц Год", "ФИО", "Специальность", "Тема ДП",
             "Председатель ГЭК", "Члены ГЭК", "Консультант","Форма обучения","Руководитель",
             "Оценка", "Виза лица, составившего протокол ", "Степень", "Диплом с отличием"
         ]
@@ -54,7 +57,7 @@ class App(tk.Tk):
                                   fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
         delete_button.grid(row=0, column=1, padx=5)
 
-        add_option_button = tk.Button(button_frame, text="Добавить опцию", command=lambda: Buttons.add_option(self),
+        add_option_button = tk.Button(button_frame, text="Добавить опцию", command=lambda: Buttons.manage_options(self),
                                       bg="#007bff",
                                       fg="white", font=("Arial", 9, "bold"), padx=5, pady=5)
         add_option_button.grid(row=0, column=2, padx=5)

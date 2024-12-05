@@ -1,14 +1,17 @@
 import tkinter as tk
 from tkinter import ttk, simpledialog
+from datetime import datetime
 
 
 def add_row(self):
-
     def save_dialog():
         data = []
 
         for i, entry in enumerate(entries):
-            if i in [3, 6, 8]:  # Столбцы 4, 5, 6 (с 0-индекса) — выпадающие списки
+            if i == 1:  # Для столбца "Месяц год время"
+                date_str = f"{year_combobox.get()}-{month_combobox.get()}-{day_combobox.get()}"
+                data.append(date_str)
+            elif i in [3, 6, 8]:  # Столбцы 4, 5, 6 — выпадающие списки
                 selected = [self.check_options[i + 1][j] for j, var in enumerate(vars[i]) if var.get()]
                 data.append(", ".join(selected) if selected else "")
             elif i in [12, 13]:  # Столбцы 13, 14 — бинарный выбор
@@ -17,7 +20,6 @@ def add_row(self):
                 data.append(entry.get() if entry.get() else "")
 
         # Добавить строку в таблицу и структуру данных
-
         self.tree.insert("", tk.END, values=data)
         self.data.append(data)
 
@@ -35,9 +37,28 @@ def add_row(self):
         "Председатель ГЭК", "Члены ГЭК", "Консультант", "Форма обучения", "Руководитель",
         "Оценка", "Виза лица, составившего протокол ", "Степень", "Диплом с отличием"
     ]
-    for i in range(14):  # Всего 14 столбцов
+    for i in range(14):
         tk.Label(dialog, text=f"{columns[i]}:", bg="#f8f9fa").grid(row=i, column=0, pady=5, padx=10, sticky="w")
-        if i in [3, 6, 8]:  # Столбцы 4, 5, 6 — выпадающие списки
+
+        if i == 1:  # Для столбца "Месяц год время"
+            date_frame = tk.Frame(dialog, bg="#f8f9fa")
+            date_frame.grid(row=i, column=1, pady=5, padx=10, sticky="w")
+
+            day_combobox = ttk.Combobox(date_frame, values=[str(d).zfill(2) for d in range(1, 32)], width=5)
+            day_combobox.set(str(datetime.now().day).zfill(2))
+            day_combobox.pack(side=tk.LEFT, padx=5)
+
+            month_combobox = ttk.Combobox(date_frame, values=[str(m).zfill(2) for m in range(1, 13)], width=5)
+            month_combobox.set(str(datetime.now().month).zfill(2))
+            month_combobox.pack(side=tk.LEFT, padx=5)
+
+            year_combobox = ttk.Combobox(date_frame, values=[str(y) for y in range(2000, 2031)], width=7)
+            year_combobox.set(str(datetime.now().year))
+            year_combobox.pack(side=tk.LEFT, padx=5)
+
+            entries.append((day_combobox, month_combobox, year_combobox))
+
+        elif i in [3, 6, 8]:  # Столбцы 4, 5, 6 — выпадающие списки
             frame = tk.Frame(dialog, bg="#f8f9fa")
             frame.grid(row=i, column=1, pady=5, padx=10, sticky="w")
             vars[i] = []
@@ -128,12 +149,72 @@ def delete_row(self):
         del self.data[row_index]
 
 
-def add_option(self):
-    column_index = simpledialog.askinteger("Добавить опцию",
-                                           "Для какого столбца (4, 5 или 6) добавить новую опцию?")
-    if column_index in self.check_options:
-        new_option = simpledialog.askstring("Добавить опцию", "Введите новую опцию:")
-        if new_option:
+def manage_options(self):
+    def update_options_list():
+
+        option_list.delete(0, tk.END)
+        for option in self.check_options[column_index]:
+            option_list.insert(tk.END, option)
+
+    def add_new_option():
+        new_option = new_option_entry.get().strip()
+        if new_option and new_option not in self.check_options[column_index]:
             self.check_options[column_index].append(new_option)
+            update_options_list()
+            new_option_entry.delete(0, tk.END)
+
+    def delete_selected_option():
+        selected_items = option_list.curselection()
+        if selected_items:
+            for index in selected_items[::-1]:
+                del self.check_options[column_index][index]
+            update_options_list()
+
+    column_index = simpledialog.askinteger(
+        "Управление опциями", "Для какого столбца (4, 7 или 9) вы хотите управлять опциями?"
+    )
+    if column_index in self.check_options:
+
+        dialog = tk.Toplevel(self)
+        dialog.title(f"Управление опциями для столбца {column_index}")
+        dialog.geometry("400x400")
+        dialog.configure(bg="#f8f9fa")
+
+        tk.Label(dialog, text=f"Опции для столбца {column_index}:", bg="#f8f9fa", font=("Arial", 10, "bold")).pack(pady=10)
 
 
+        option_list_frame = tk.Frame(dialog, bg="#f8f9fa")
+        option_list_frame.pack(pady=5, padx=10, fill=tk.BOTH, expand=True)
+
+        option_list = tk.Listbox(option_list_frame, selectmode=tk.MULTIPLE, height=10, width=40)
+        option_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        update_options_list()
+
+        scrollbar = tk.Scrollbar(option_list_frame, orient=tk.VERTICAL, command=option_list.yview)
+        option_list.config(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+
+        new_option_label = tk.Label(dialog, text="Добавить новую опцию:", bg="#f8f9fa")
+        new_option_label.pack(pady=(10, 0))
+        new_option_entry = tk.Entry(dialog, width=30)
+        new_option_entry.pack(pady=(0, 10))
+
+
+        button_frame = tk.Frame(dialog, bg="#f8f9fa")
+        button_frame.pack(pady=10)
+
+        add_button = tk.Button(
+            button_frame, text="Добавить", command=add_new_option, bg="#28a745", fg="white", font=("Arial", 9, "bold")
+        )
+        add_button.grid(row=0, column=0, padx=5)
+
+        delete_button = tk.Button(
+            button_frame, text="Удалить выбранные", command=delete_selected_option, bg="#dc3545", fg="white", font=("Arial", 9, "bold")
+        )
+        delete_button.grid(row=0, column=1, padx=5)
+
+        close_button = tk.Button(
+            dialog, text="Закрыть", command=dialog.destroy, bg="#007bff", fg="white", font=("Arial", 9, "bold")
+        )
+        close_button.pack(pady=10)
