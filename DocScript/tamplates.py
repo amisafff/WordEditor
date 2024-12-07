@@ -15,18 +15,42 @@ def fill_word_template(dat_all, output_file_path):
     ]
 
     for template_index, template_path in enumerate(template_paths):
+
         doc = Document(template_path)
 
         data = {}
+
         for index, record in enumerate(dat_all):
-            data[f"ФИО{index+1}"] = record[2]
-            data[f"Специальность"] = record[3]
-            data[f"Месяц_год_время"] = record[1]
+            # Получаем строку с членами ГЭК
+            geks_str = record[6]  # Столбец с членами ГЭК
+            # Разделяем строку по запятой (или другим разделителем, если необходимо)
+            geks = geks_str.split(',')  # Если члены разделены запятой
+            # Убираем лишние пробелы
+            geks = [geek.strip() for geek in geks]
+
+            # Сохраняем каждого члена ГЭК
+            for g_index, member in enumerate(geks):
+                data[f"Члены_ГЭК{index + 1}_{g_index + 1}"] = member
+            data[f"ФИО{index + 1}"] = record[2]  # Столбец "ФИО"
+            data[f"Специальность"] = record[3]  # Столбец "Специальность"
+            data[f"Тема_ДП{index + 1}"] = record[4]  # Столбец "Тема ДП"
+            data[f"Председатель_ГЭК"] = record[5]  # Столбец "Председатель ГЭК"
+            data[f"Консультант{index + 1}"] = record[7]  # Столбец "Консультант"
+            data[f"ФОРМ{index + 1}"] = record[8]  # Столбец "Форма обучения"
+            data[f"Руководитель{index + 1}"] = record[9]  # Столбец "Руководитель"
+            data[f"ОЦ{index + 1}"] = record[10]  # Столбец "Оценка"
+            data[f"ВИЗА{index + 1}"] = record[11]  # Столбец "Виза лица, составившего протокол"
+            data[f"Степень{index + 1}"] = record[12]  # Столбец "Степень"
+            data[f"ОТЛ{index + 1}"] = record[13]  # Столбец "Диплом с отличием"
+            data[f"НОМ{index + 1}"] = record[0]  # Столбец "Диплом с отличием"
 
         for paragraph in doc.paragraphs:
             for key, value in data.items():
                 if f"{{{{{key}}}}}" in paragraph.text:
                     paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", str(value))
+                # Удаляем метку, если значения нет в data
+                if f"{{{{{key}}}}}" in paragraph.text and key not in data:
+                    paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", "")
 
         for table in doc.tables:
             for row in table.rows:
@@ -34,6 +58,9 @@ def fill_word_template(dat_all, output_file_path):
                     for key, value in data.items():
                         if f"{{{{{key}}}}}" in cell.text:
                             cell.text = cell.text.replace(f"{{{{{key}}}}}", str(value))
+                        # Удаляем метку, если значения нет в data
+                        if f"{{{{{key}}}}}" in cell.text and key not in data:
+                            cell.text = cell.text.replace(f"{{{{{key}}}}}", "")
 
         file_name = f"{template_index + 1}-output.docx"
         save_path = os.path.join(output_file_path, file_name)
