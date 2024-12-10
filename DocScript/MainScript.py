@@ -1,6 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import filedialog
+from datetime import datetime
 
 import Buttons
 import Table
@@ -16,7 +17,6 @@ template_paths = [
     'DocFile/Статистика ГЭК_для КП.docx'
 ]
 
-
 def mainscr(self):
     root = tk.Tk()
     root.withdraw()
@@ -25,15 +25,21 @@ def mainscr(self):
     output_folder = filedialog.askdirectory(title="Выберите папку для сохранения документов")
 
     if output_folder:
+        # Добавление сохранения в папку с текущей датой и временем
+        current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        timestamped_folder = os.path.join(output_folder, current_datetime)
+        os.makedirs(timestamped_folder, exist_ok=True)
 
-        students_folder = os.path.join(output_folder, "студенты")
+        # Создание папки "студенты" внутри папки с текущей датой
+        students_folder = os.path.join(timestamped_folder, "студенты")
         os.makedirs(students_folder, exist_ok=True)
 
+        # Сохранение в папку "студенты"
         Begdans.fill_word_template(self.data, template_paths[0], students_folder)
         print(f"Файл сохранен в папку: {students_folder}")
 
-        tamplates.fill_word_template(self.data, output_folder)
-
-        print(f"Выбрана папка для сохранения: {output_folder}")
+        # Сохранение остальных файлов в папку с текущей датой
+        tamplates.fill_word_template(self.data, timestamped_folder)
+        print(f"Выбрана папка для сохранения: {timestamped_folder}")
     else:
         print("Сохранение отменено.")

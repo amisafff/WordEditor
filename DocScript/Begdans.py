@@ -47,7 +47,7 @@ def fill_word_template(dat_all, template_path, output_file_path):
                         if f"{{{{{key}}}}}" in cell.text:
                             cell.text = cell.text.replace(f"{{{{{key}}}}}", str(value))
 
-        file_name = f"{i + 1}_template.docx"
+        file_name = f"{dat_all[i][2]}_.docx"
         save_path = os.path.join(output_file_path, file_name)
 
         doc.save(save_path)

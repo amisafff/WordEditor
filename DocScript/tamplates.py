@@ -28,6 +28,7 @@ def fill_word_template(dat_all, output_file_path):
             # Убираем лишние пробелы
             geks = [geek.strip() for geek in geks]
 
+            substringsDate = record[1].split('-')
             # Сохраняем каждого члена ГЭК
             for g_index, member in enumerate(geks):
                 data[f"Члены_ГЭК{index + 1}_{g_index + 1}"] = member
@@ -42,7 +43,10 @@ def fill_word_template(dat_all, output_file_path):
             data[f"ВИЗА{index + 1}"] = record[11]  # Столбец "Виза лица, составившего протокол"
             data[f"Степень{index + 1}"] = record[12]  # Столбец "Степень"
             data[f"ОТЛ{index + 1}"] = record[13]  # Столбец "Диплом с отличием"
-            data[f"НОМ{index + 1}"] = record[0]  # Столбец "Диплом с отличием"
+            data[f"НОМ{index + 1}"] = record[0]  # Столбец "Номер протокола"
+            data[f"День"] = substringsDate[2]
+            data[f"Год"] = substringsDate[0]
+            data[f"Время"] = substringsDate[3]
 
         for paragraph in doc.paragraphs:
             for key, value in data.items():
@@ -62,10 +66,7 @@ def fill_word_template(dat_all, output_file_path):
                         if f"{{{{{key}}}}}" in cell.text and key not in data:
                             cell.text = cell.text.replace(f"{{{{{key}}}}}", "")
 
-        file_name = f"{template_index + 1}-output.docx"
+        file_name = os.path.basename(template_path)
         save_path = os.path.join(output_file_path, file_name)
         doc.save(save_path)
         print(f"Файл {file_name} успешно сохранен в {output_file_path}.")
-
-
-
