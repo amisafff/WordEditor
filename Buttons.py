@@ -5,74 +5,58 @@ from datetime import datetime
 
 def add_row(self):
     def save_dialog():
-
-
         data = []
-
         for i, entry in enumerate(entries):
             if i == 1:  # Для столбца "Месяц год время"
                 date_str = f"{year_combobox.get()}-{month_combobox.get()}-{day_combobox.get()}-{hour_combobox.get()}:{minute_combobox.get()}"
                 data.append(date_str)
-                # Сохранить стандартное значение даты и времени
                 self.default_values["date"] = (day_combobox.get(), month_combobox.get(), year_combobox.get())
                 self.default_values["time"] = (hour_combobox.get(), minute_combobox.get())
-                # Сохранить стандартное значение
-                self.default_values["date"] = (day_combobox.get(), month_combobox.get(), year_combobox.get())
-            elif i in [3, 6, 8]:  # Столбцы 4, 5, 6 — выпадающие списки
+            elif i in [3, 6, 8]:  # Выпадающие списки
                 selected = [self.check_options[i + 1][j] for j, var in enumerate(vars[i]) if var.get()]
                 data.append(", ".join(selected) if selected else "")
                 self.default_values[f"options_{i}"] = [var.get() for var in vars[i]]
-                # Сохранить стандартное значение
-                self.default_values[f"options_{i}"] = [var.get() for var in vars[i]]
-            elif i in [5, 11]:  # Поля "Председатель ГЭК" и "Виза лица, составившего протокол"
+            elif i in [5, 11]:  # Текстовые поля
                 value = entry.get() if entry.get() else ""
                 data.append(value)
-                # Сохранить стандартное значение
                 self.default_values[f"text_{i}"] = value
-            elif i in [12, 13]:  # Столбцы 13, 14 — бинарный выбор
+            elif i in [12, 13]:  # Бинарные поля
                 value = entry.get() if entry.get() else "Нет"
                 data.append(value)
-                # Сохранить стандартное значение
                 self.default_values[f"binary_{i}"] = value
-            elif i == 6:  # Поле "Члены ГЭК" (многострочная организация)
-                selected = [self.check_options[i + 1][j] for j, var in enumerate(vars[i]) if var.get()]
-                data.append(", ".join(selected) if selected else "")
-                self.default_values[f"options_{i}"] = [var.get() for var in vars[i]]
             else:
                 value = entry.get() if entry.get() else ""
                 data.append(value)
 
-        # Добавить строку в таблицу и структуру данных
         self.tree.insert("", tk.END, values=data)
         self.data.append(data)
-
         dialog.destroy()
 
     dialog = tk.Toplevel(self)
     dialog.title("Добавить строку")
     dialog.geometry("600x500")
-    dialog.configure(bg="#f8f9fa")
 
-    # Инициализация стандартных значений, если их нет
-    if not hasattr(self, "default_values"):
-        self.default_values = {}
+    # Создаем Canvas для прокрутки
+    canvas_frame = tk.Frame(dialog)
+    canvas_frame.pack(fill=tk.BOTH, expand=True)
 
-    container = tk.Frame(dialog)
-    container.pack(fill=tk.BOTH, expand=True)
+    canvas = tk.Canvas(canvas_frame, bg="#f8f9fa")
+    scrollbar = tk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=canvas.yview)
+    canvas.configure(yscrollcommand=scrollbar.set)
 
-    canvas = tk.Canvas(container, bg="#f8f9fa")
-    scrollbar = ttk.Scrollbar(container, orient=tk.VERTICAL, command=canvas.yview)
+    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
     scrollable_frame = tk.Frame(canvas, bg="#f8f9fa")
-
     scrollable_frame.bind(
-        "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
     )
 
     canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
 
-    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    if not hasattr(self, "default_values"):
+        self.default_values = {}
 
     entries = []
     vars = {}
@@ -82,21 +66,18 @@ def add_row(self):
         "Оценка", "Виза лица, составившего протокол", "Степень", "Диплом с отличием"
     ]
     for i in range(14):
-
-        tk.Label(dialog, text=f"{columns[i]}:", bg="#f8f9fa").grid(row=i, column=0, pady=5, padx=10, sticky="w")
+        tk.Label(scrollable_frame, text=f"{columns[i]}:", bg="#f8f9fa").grid(row=i, column=0, pady=5, padx=10, sticky="w")
 
         if i == 1:  # Для столбца "Месяц год время"
-            date_time_frame = tk.Frame(dialog, bg="#f8f9fa")
+            date_time_frame = tk.Frame(scrollable_frame, bg="#f8f9fa")
             date_time_frame.grid(row=i, column=1, pady=5, padx=10, sticky="w")
 
-            # Установка стандартных значений даты и времени
             day = self.default_values.get("date", (str(datetime.now().day).zfill(2),))[0]
             month = self.default_values.get("date", ("", str(datetime.now().month).zfill(2)))[1]
             year = self.default_values.get("date", ("", "", str(datetime.now().year)))[2]
             hour = self.default_values.get("time", (str(datetime.now().hour).zfill(2),))[0]
             minute = self.default_values.get("time", (str(datetime.now().minute).zfill(2),))[0]
 
-            # Выпадающие списки для дня, месяца, года
             day_combobox = ttk.Combobox(date_time_frame, values=[str(d).zfill(2) for d in range(1, 32)], width=5)
             day_combobox.set(day)
             day_combobox.pack(side=tk.LEFT, padx=5)
@@ -109,7 +90,6 @@ def add_row(self):
             year_combobox.set(year)
             year_combobox.pack(side=tk.LEFT, padx=5)
 
-            # Выпадающие списки для часов и минут
             hour_combobox = ttk.Combobox(date_time_frame, values=[str(h).zfill(2) for h in range(24)], width=5)
             hour_combobox.set(hour)
             hour_combobox.pack(side=tk.LEFT, padx=5)
@@ -118,46 +98,40 @@ def add_row(self):
             minute_combobox.set(minute)
             minute_combobox.pack(side=tk.LEFT, padx=5)
 
-            # Сохранение комбобоксов в список entries
             entries.append((day_combobox, month_combobox, year_combobox, hour_combobox, minute_combobox))
-
-
-        elif i in [3, 6, 8]:  # Столбцы 4, 5, 6 — выпадающие списки
-            frame = tk.Frame(dialog, bg="#f8f9fa")
+        elif i in [3, 6, 8]:
+            frame = tk.Frame(scrollable_frame, bg="#f8f9fa")
             frame.grid(row=i, column=1, pady=5, padx=10, sticky="w")
 
             vars[i] = []
             default_values = self.default_values.get(f"options_{i}", [False] * len(self.check_options[i + 1]))
-
             for index, (option, default_value) in enumerate(zip(self.check_options[i + 1], default_values)):
                 var = tk.BooleanVar(value=default_value)
                 cb = tk.Checkbutton(frame, text=option, variable=var, bg="#f8f9fa")
                 cb.grid(row=index // 3, column=index % 3, padx=5, pady=2, sticky="w")
                 vars[i].append(var)
-
             entries.append(None)
-
-        elif i in [5, 11]:  # Поля "Председатель ГЭК" и "Виза лица, составившего протокол"
+        elif i in [5, 11]:
             default_value = self.default_values.get(f"text_{i}", "")
-            entry = tk.Entry(dialog, width=30)
+            entry = tk.Entry(scrollable_frame, width=30)
             entry.insert(0, default_value)
             entry.grid(row=i, column=1, pady=5, padx=10, sticky="w")
             entries.append(entry)
-
-        elif i in [12, 13]:  # Столбцы 13, 14 — бинарный выбор
+        elif i in [12, 13]:
             default_value = self.default_values.get(f"binary_{i}", "Нет")
-            entry = ttk.Combobox(dialog, values=["Да", "Нет"])
+            entry = ttk.Combobox(scrollable_frame, values=["Да", "Нет"])
             entry.set(default_value)
             entry.grid(row=i, column=1, pady=5, padx=10, sticky="w")
             entries.append(entry)
-
-        else:  # Текстовые поля
-            entry = tk.Entry(dialog, width=30)
+        else:
+            entry = tk.Entry(scrollable_frame, width=30)
             entry.grid(row=i, column=1, pady=5, padx=10, sticky="w")
             entries.append(entry)
 
-    tk.Button(dialog, text="Сохранить", command=save_dialog, bg="#28a745", fg="white").grid(row=14, column=0,
-                                                                                            columnspan=2, pady=20)
+    tk.Button(scrollable_frame, text="Сохранить", command=save_dialog, bg="#28a745", fg="white").grid(row=14, column=0,
+                                                                                                    columnspan=2,
+                                                                                                    pady=20)
+
 
 
 

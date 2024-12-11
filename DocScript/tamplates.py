@@ -1,7 +1,6 @@
 import os
 from docx import Document
 
-
 def fill_word_template(dat_all, output_file_path):
     if not os.path.exists(output_file_path):
         os.makedirs(output_file_path)
@@ -19,7 +18,33 @@ def fill_word_template(dat_all, output_file_path):
         doc = Document(template_path)
 
         data = {}
+        total_students = len(dat_all)  # Общее количество студентов
 
+        # Статистика по формам обучения
+        dnevna_count = 0
+        distanc_count = 0
+        dnevna_sum = 0
+        distanc_sum = 0
+        for i in range(1, 21):  # Предположим, что максимум 20 студентов
+            data[f"ФИО{i}"] = ""
+            data[f"ФОРМ{i}"] = ""
+            data[f"НОМ{i}"] = ""
+            data[f"ОЦ{i}"] = ""
+            data[f"ОТЛ{i}"] = ""
+            data[f"Члены_ГЭК{i}_1"] = ""
+            data[f"Члены_ГЭК{i}_2"] = ""
+            data[f"Члены_ГЭК{i}_3"] = ""
+            data[f"Председатель_ГЭК"] = ""
+            data[f"Консультант{i}"] = ""
+            data[f"Руководитель{i}"] = ""
+            data[f"ТЕМА{i}"] = ""
+            data[f"ВИЗА{i}"] = ""
+            data[f"Степень{i}"] = ""
+            data[f"День"] = ""
+            data[f"Год"] = ""
+            data[f"Время"] = ""  # Можно задать фиксированное время, если нужно
+            data[f"ОТЛ{i}"] = ""  # Диплом с отличием
+        # Заполнение данных для студентов
         for index, record in enumerate(dat_all):
             # Получаем строку с членами ГЭК
             geks_str = record[6]  # Столбец с членами ГЭК
@@ -34,20 +59,59 @@ def fill_word_template(dat_all, output_file_path):
                 data[f"Члены_ГЭК{index + 1}_{g_index + 1}"] = member
             data[f"ФИО{index + 1}"] = record[2]  # Столбец "ФИО"
             data[f"Специальность"] = record[3]  # Столбец "Специальность"
-            data[f"Тема_ДП{index + 1}"] = record[4]  # Столбец "Тема ДП"
+            data[f"ТЕМА{index + 1}"] = record[4]  # Столбец "Тема ДП"
             data[f"Председатель_ГЭК"] = record[5]  # Столбец "Председатель ГЭК"
             data[f"Консультант{index + 1}"] = record[7]  # Столбец "Консультант"
             data[f"ФОРМ{index + 1}"] = record[8]  # Столбец "Форма обучения"
             data[f"Руководитель{index + 1}"] = record[9]  # Столбец "Руководитель"
             data[f"ОЦ{index + 1}"] = record[10]  # Столбец "Оценка"
-            data[f"ВИЗА{index + 1}"] = record[11]  # Столбец "Виза лица, составившего протокол"
+            data[f"ВИЗА"] = record[11]  # Столбец "Виза лица, составившего протокол"
             data[f"Степень{index + 1}"] = record[12]  # Столбец "Степень"
-            data[f"ОТЛ{index + 1}"] = record[13]  # Столбец "Диплом с отличием"
             data[f"НОМ{index + 1}"] = record[0]  # Столбец "Номер протокола"
             data[f"День"] = substringsDate[2]
             data[f"Год"] = substringsDate[0]
             data[f"Время"] = substringsDate[3]
+            # Логика для "Диплом с отличием"
+            if record[13] == "Да":
+                data[f"ОТЛ{index + 1}"] = "с отличием"
+            else:
+                data[f"ОТЛ{index + 1}"] = ""  # Пустая строка, если не с отличием
 
+            # Статистика по форме обучения
+            form = record[8]
+            grade = int(record[10])
+
+            if form == "Дневная":
+                dnevna_count += 1
+                dnevna_sum += grade
+            elif form == "Дистанционная":
+                distanc_count += 1
+                distanc_sum += grade
+
+        # Средний балл для каждой формы обучения
+        if dnevna_count > 0:
+            dnevna_avg = dnevna_sum / dnevna_count
+        else:
+            dnevna_avg = 0
+
+        if distanc_count > 0:
+            distanc_avg = distanc_sum / distanc_count
+        else:
+            distanc_avg = 0
+
+        # Добавляем статистику в данные
+        data["Дневная_СРЕДНИЙ_БАЛЛ"] = round(dnevna_avg, 2)
+        data["Дистанционная_СРЕДНИЙ_БАЛЛ"] = round(distanc_avg, 2)
+
+        # Распределение по оценкам для дневной и дистанционной форм
+        for grade in range(10, 2, -1):  # Для оценок с 10 по 3
+            data[f"Дневная_ОЦ_{grade}_КОЛ"] = sum(1 for record in dat_all if record[8] == "Дневная" and int(record[10]) == grade)
+            data[f"Дневная_ОЦ_{grade}_ПРЦ"] = round(data[f"Дневная_ОЦ_{grade}_КОЛ"] / dnevna_count * 100, 2) if dnevna_count > 0 else 0
+
+            data[f"Дистанционная_ОЦ_{grade}_КОЛ"] = sum(1 for record in dat_all if record[8] == "Дистанционная" and int(record[10]) == grade)
+            data[f"Дистанционная_ОЦ_{grade}_ПРЦ"] = round(data[f"Дистанционная_ОЦ_{grade}_КОЛ"] / distanc_count * 100, 2) if distanc_count > 0 else 0
+
+        # Заменяем метки в параграфах
         for paragraph in doc.paragraphs:
             for key, value in data.items():
                 if f"{{{{{key}}}}}" in paragraph.text:
@@ -56,6 +120,7 @@ def fill_word_template(dat_all, output_file_path):
                 if f"{{{{{key}}}}}" in paragraph.text and key not in data:
                     paragraph.text = paragraph.text.replace(f"{{{{{key}}}}}", "")
 
+        # Заменяем метки в таблицах
         for table in doc.tables:
             for row in table.rows:
                 for cell in row.cells:
@@ -66,6 +131,7 @@ def fill_word_template(dat_all, output_file_path):
                         if f"{{{{{key}}}}}" in cell.text and key not in data:
                             cell.text = cell.text.replace(f"{{{{{key}}}}}", "")
 
+        # Сохраняем файл
         file_name = os.path.basename(template_path)
         save_path = os.path.join(output_file_path, file_name)
         doc.save(save_path)
