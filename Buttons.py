@@ -57,22 +57,7 @@ def add_row(self):
     if not hasattr(self, "default_values"):
         self.default_values = {}
 
-    container = tk.Frame(dialog)
-    container.pack(fill=tk.BOTH, expand=True)
 
-    canvas = tk.Canvas(container, bg="#f8f9fa")
-    scrollbar = ttk.Scrollbar(container, orient=tk.VERTICAL, command=canvas.yview)
-    scrollable_frame = tk.Frame(canvas, bg="#f8f9fa")
-
-    scrollable_frame.bind(
-        "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-    )
-
-    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
-
-    canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
     entries = []
     vars = {}
