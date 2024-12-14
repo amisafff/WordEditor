@@ -3,8 +3,6 @@ import tkinter as tk
 from tkinter import filedialog
 from datetime import datetime
 
-import Buttons
-import Table
 from DocScript import Begdans
 from DocScript import tamplates
 
@@ -17,12 +15,12 @@ template_paths = [
     'DocFile/Статистика ГЭК_для КП.docx'
 ]
 
-def mainscr(self):
+
+def mainscr(self, callback , output_folder):
     root = tk.Tk()
     root.withdraw()
     data1 = self.data
     print(data1)
-    output_folder = filedialog.askdirectory(title="Выберите папку для сохранения документов")
 
     if output_folder:
         # Добавление сохранения в папку с текущей датой и временем
@@ -39,7 +37,9 @@ def mainscr(self):
         print(f"Файл сохранен в папку: {students_folder}")
 
         # Сохранение остальных файлов в папку с текущей датой
-        tamplates.fill_word_template(self.data, timestamped_folder)
+        tamplates.run_async(self.data, timestamped_folder)
         print(f"Выбрана папка для сохранения: {timestamped_folder}")
+        callback(self, True)
     else:
         print("Сохранение отменено.")
+        callback(self, False)

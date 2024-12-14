@@ -1,11 +1,13 @@
 import tkinter as tk
-from tkinter import ttk, simpledialog
+from tkinter import ttk,  messagebox
 from datetime import datetime
 
 
 def add_row(self):
     def save_dialog():
         data = []
+        errors = []
+
         for i, entry in enumerate(entries):
             if i == 1:  # Для столбца "Месяц год время"
                 date_str = f"{year_combobox.get()}-{month_combobox.get()}-{day_combobox.get()}-{hour_combobox.get()}:{minute_combobox.get()}"
@@ -14,19 +16,34 @@ def add_row(self):
                 self.default_values["time"] = (hour_combobox.get(), minute_combobox.get())
             elif i in [3, 6, 8]:  # Выпадающие списки
                 selected = [self.check_options[i + 1][j] for j, var in enumerate(vars[i]) if var.get()]
-                data.append(", ".join(selected) if selected else "")
+                if not selected:
+                    errors.append(f"Пожалуйста, выберите хотя бы один пункт для \"{columns[i]}\".")
+                data.append(", ".join(selected))
                 self.default_values[f"options_{i}"] = [var.get() for var in vars[i]]
-            elif i in [5, 11]:  # Текстовые поля
-                value = entry.get() if entry.get() else ""
-                data.append(value)
-                self.default_values[f"text_{i}"] = value
             elif i in [12, 13]:  # Бинарные поля
                 value = entry.get() if entry.get() else "Нет"
                 data.append(value)
                 self.default_values[f"binary_{i}"] = value
-            else:
-                value = entry.get() if entry.get() else ""
+            elif i == 10:  # Проверка для оценки
+                try:
+                    score = int(entry.get())
+                    if 0 <= score <= 10:
+                        data.append(score)
+                    else:
+                        raise ValueError
+                except ValueError:
+                    errors.append("Оценка должна быть числом от 0 до 10.")
+            else:  # Для остальных полей
+                value = entry.get().strip()
+                if not value:
+                    errors.append(f"Поле \"{columns[i]}\" не может быть пустым.")
                 data.append(value)
+
+        if errors:
+            # Показываем окно с ошибками, и устанавливаем фокус на это окно
+            messagebox.showerror("Ошибки ввода", "\n".join(errors))
+            dialog.focus_set()  # Устанавливаем фокус обратно на окно
+            return
 
         self.tree.insert("", tk.END, values=data)
         self.data.append(data)
@@ -66,7 +83,8 @@ def add_row(self):
         "Оценка", "Виза лица, составившего протокол", "Степень", "Диплом с отличием"
     ]
     for i in range(14):
-        tk.Label(scrollable_frame, text=f"{columns[i]}:", bg="#f8f9fa").grid(row=i, column=0, pady=5, padx=10, sticky="w")
+        tk.Label(scrollable_frame, text=f"{columns[i]}:", bg="#f8f9fa").grid(row=i, column=0, pady=5, padx=10,
+                                                                             sticky="w")
 
         if i == 1:  # Для столбца "Месяц год время"
             date_time_frame = tk.Frame(scrollable_frame, bg="#f8f9fa")
@@ -111,12 +129,6 @@ def add_row(self):
                 cb.grid(row=index // 3, column=index % 3, padx=5, pady=2, sticky="w")
                 vars[i].append(var)
             entries.append(None)
-        elif i in [5, 11]:
-            default_value = self.default_values.get(f"text_{i}", "")
-            entry = tk.Entry(scrollable_frame, width=30)
-            entry.insert(0, default_value)
-            entry.grid(row=i, column=1, pady=5, padx=10, sticky="w")
-            entries.append(entry)
         elif i in [12, 13]:
             default_value = self.default_values.get(f"binary_{i}", "Нет")
             entry = ttk.Combobox(scrollable_frame, values=["Да", "Нет"])
@@ -129,10 +141,8 @@ def add_row(self):
             entries.append(entry)
 
     tk.Button(scrollable_frame, text="Сохранить", command=save_dialog, bg="#28a745", fg="white").grid(row=14, column=0,
-                                                                                                    columnspan=2,
-                                                                                                    pady=20)
-
-
+                                                                                                      columnspan=2,
+                                                                                                      pady=20)
 
 
 def edit_row(self):
@@ -205,81 +215,102 @@ def delete_row(self):
 
 
 def manage_options(self):
-    def update_options_list():
-        option_list.delete(0, tk.END)
-        for option in self.check_options[column_index]:
-            option_list.insert(tk.END, option)
 
-    def add_new_option():
-        new_option = new_option_entry.get().strip()
-        if new_option and new_option not in self.check_options[column_index]:
-            self.check_options[column_index].append(new_option)
+    def select_column(column):
+
+        root.destroy()
+        column_index = column
+
+        def update_options_list():
+            option_list.delete(0, tk.END)
+            for option in self.check_options[column_index]:
+                option_list.insert(tk.END, option)
+
+        def add_new_option():
+            new_option = new_option_entry.get().strip()
+            if new_option and new_option not in self.check_options[column_index]:
+                self.check_options[column_index].append(new_option)
+                update_options_list()
+                new_option_entry.delete(0, tk.END)
+                save_options_to_file()  # Сохраняем опции после добавления
+
+        def delete_selected_option():
+            selected_items = option_list.curselection()
+            if selected_items:
+                for index in selected_items[::-1]:
+                    del self.check_options[column_index][index]
+                update_options_list()
+                save_options_to_file()  # Сохраняем опции после удаления
+
+        def save_options_to_file():
+            file_path = f"options_{column_index}.txt"  # Для каждого столбца свой файл
+            try:
+                with open(file_path, "w", encoding="utf-8") as file:
+                    for option in self.check_options[column_index]:
+                        file.write(option + "\n")
+            except Exception as e:
+                tk.messagebox.showerror("Ошибка", f"Не удалось сохранить опции: {e}")
+
+        if column_index in self.check_options:
+            dialog = tk.Toplevel(self)
+            dialog.title(f"Управление опциями для столбца {column_index}")
+            dialog.geometry("400x400")
+            dialog.configure(bg="#f8f9fa")
+
+            tk.Label(dialog, text=f"Опции для столбца {column_index}:", bg="#f8f9fa", font=("Arial", 10, "bold")).pack(
+                pady=10)
+
+            option_list_frame = tk.Frame(dialog, bg="#f8f9fa")
+            option_list_frame.pack(pady=5, padx=10, fill=tk.BOTH, expand=True)
+
+            option_list = tk.Listbox(option_list_frame, selectmode=tk.MULTIPLE, height=10, width=40)
+            option_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             update_options_list()
-            new_option_entry.delete(0, tk.END)
-            save_options_to_file()  # Сохраняем опции после добавления
 
-    def delete_selected_option():
-        selected_items = option_list.curselection()
-        if selected_items:
-            for index in selected_items[::-1]:
-                del self.check_options[column_index][index]
-            update_options_list()
-            save_options_to_file()  # Сохраняем опции после удаления
+            scrollbar = tk.Scrollbar(option_list_frame, orient=tk.VERTICAL, command=option_list.yview)
+            option_list.config(yscrollcommand=scrollbar.set)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-    def save_options_to_file():
-        file_path = f"options_{column_index}.txt"  # Для каждого столбца свой файл
-        try:
-            with open(file_path, "w", encoding="utf-8") as file:
-                for option in self.check_options[column_index]:
-                    file.write(option + "\n")
-        except Exception as e:
-            tk.messagebox.showerror("Ошибка", f"Не удалось сохранить опции: {e}")
+            new_option_label = tk.Label(dialog, text="Добавить новую опцию:", bg="#f8f9fa")
+            new_option_label.pack(pady=(10, 0))
+            new_option_entry = tk.Entry(dialog, width=30)
+            new_option_entry.pack(pady=(0, 10))
 
+            button_frame = tk.Frame(dialog, bg="#f8f9fa")
+            button_frame.pack(pady=10)
 
+            add_button = tk.Button(
+                button_frame, text="Добавить", command=add_new_option, bg="#28a745", fg="white",
+                font=("Arial", 9, "bold")
+            )
+            add_button.grid(row=0, column=0, padx=5)
 
-    column_index = simpledialog.askinteger(
-        "Управление опциями", "Для какого столбца (4, 7 или 9) вы хотите управлять опциями?"
-    )
-    if column_index in self.check_options:
-        dialog = tk.Toplevel(self)
-        dialog.title(f"Управление опциями для столбца {column_index}")
-        dialog.geometry("400x400")
-        dialog.configure(bg="#f8f9fa")
+            delete_button = tk.Button(
+                button_frame, text="Удалить выбранные", command=delete_selected_option, bg="#dc3545", fg="white",
+                font=("Arial", 9, "bold")
+            )
+            delete_button.grid(row=0, column=1, padx=5)
 
-        tk.Label(dialog, text=f"Опции для столбца {column_index}:", bg="#f8f9fa", font=("Arial", 10, "bold")).pack(pady=10)
+            close_button = tk.Button(
+                dialog, text="Закрыть", command=dialog.destroy, bg="#007bff", fg="white", font=("Arial", 9, "bold")
+            )
+            close_button.pack(pady=10)
 
-        option_list_frame = tk.Frame(dialog, bg="#f8f9fa")
-        option_list_frame.pack(pady=5, padx=10, fill=tk.BOTH, expand=True)
+    root = tk.Tk()
+    root.title("Управление опциями")
 
-        option_list = tk.Listbox(option_list_frame, selectmode=tk.MULTIPLE, height=10, width=40)
-        option_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        update_options_list()
+    label = tk.Label(root, text="Выберите параметр для изменения")
+    label.pack(pady=10)
 
-        scrollbar = tk.Scrollbar(option_list_frame, orient=tk.VERTICAL, command=option_list.yview)
-        option_list.config(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+    button_4 = tk.Button(root, text="Специальность", command=lambda: select_column(4))
+    button_4.pack(pady=5)
 
-        new_option_label = tk.Label(dialog, text="Добавить новую опцию:", bg="#f8f9fa")
-        new_option_label.pack(pady=(10, 0))
-        new_option_entry = tk.Entry(dialog, width=30)
-        new_option_entry.pack(pady=(0, 10))
+    button_7 = tk.Button(root, text="Члены ГЭК", command=lambda: select_column(7))
+    button_7.pack(pady=5)
 
-        button_frame = tk.Frame(dialog, bg="#f8f9fa")
-        button_frame.pack(pady=10)
+    button_9 = tk.Button(root, text="Форма обучения", command=lambda: select_column(9))
+    button_9.pack(pady=5)
 
-        add_button = tk.Button(
-            button_frame, text="Добавить", command=add_new_option, bg="#28a745", fg="white", font=("Arial", 9, "bold")
-        )
-        add_button.grid(row=0, column=0, padx=5)
-
-        delete_button = tk.Button(
-            button_frame, text="Удалить выбранные", command=delete_selected_option, bg="#dc3545", fg="white", font=("Arial", 9, "bold")
-        )
-        delete_button.grid(row=0, column=1, padx=5)
+    root.mainloop()
 
 
-
-        close_button = tk.Button(
-            dialog, text="Закрыть", command=dialog.destroy, bg="#007bff", fg="white", font=("Arial", 9, "bold")
-        )
-        close_button.pack(pady=10)
