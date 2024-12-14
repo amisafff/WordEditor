@@ -1,6 +1,5 @@
 import os
 import tkinter as tk
-from tkinter import filedialog
 from datetime import datetime
 
 from DocScript import Begdans

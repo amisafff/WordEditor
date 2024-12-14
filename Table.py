@@ -113,9 +113,9 @@ class App(tk.Tk):
             else:
                 print("Произошла ошибка при сохранении.")
 
-            MainScript.mainscr(self, on_save_complete, output_folder)
-            progress_window.destroy()
-            messagebox.showinfo("Успех", "Данные успешно сохранены в Word!")
+        MainScript.mainscr(self, on_save_complete, output_folder)
+        progress_window.destroy()
+        messagebox.showinfo("Успех", "Данные успешно сохранены в Word!")
 
     def create_progress_window(self):
         """

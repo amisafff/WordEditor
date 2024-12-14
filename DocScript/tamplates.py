@@ -3,9 +3,6 @@ import asyncio
 from docx import Document
 
 
-
-
-
 async def process_template_async(template_path, dat_all, output_file_path):
     doc = Document(template_path)
 
@@ -127,7 +124,6 @@ async def process_template_async(template_path, dat_all, output_file_path):
     print(f"Файл {file_name} успешно сохранен в {output_file_path}.")
 
 
-
 async def fill_word_template_async(dat_all, output_file_path):
     if not os.path.exists(output_file_path):
         os.makedirs(output_file_path)
@@ -151,4 +147,3 @@ async def fill_word_template_async(dat_all, output_file_path):
 # Основная асинхронная функция
 def run_async(dat_all, output_file_path):
     asyncio.run(fill_word_template_async(dat_all, output_file_path))
-
